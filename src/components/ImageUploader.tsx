@@ -1,21 +1,23 @@
 // src/components/ImageUploader.tsx
 
 import { useState } from 'react';
-import { Upload, X, Loader } from 'lucide-react';
+import { Upload, X } from 'lucide-react';
 
 interface ImageUploaderProps {
   currentPhotoUrl?: string;
-  onUploadSuccess: (photoUrl: string, publicId: string) => void;
+  onFileSelect: (file: File | null) => void;
+  disabled?: boolean;
 }
 
-export function ImageUploader({ currentPhotoUrl, onUploadSuccess }: ImageUploaderProps) {
-  const [uploading, setUploading] = useState(false);
+export function ImageUploader({
+  currentPhotoUrl,
+  onFileSelect,
+  disabled = false,
+}: ImageUploaderProps) {
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [error, setError] = useState('');
 
-  const CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
-  const UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
-
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -31,95 +33,64 @@ export function ImageUploader({ currentPhotoUrl, onUploadSuccess }: ImageUploade
     }
 
     setError('');
-    setUploading(true);
 
-    try {
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('upload_preset', UPLOAD_PRESET);
-      formData.append('folder', 'employee-photos');
+    // Create preview URL
+    const objectUrl = URL.createObjectURL(file);
+    setPreviewUrl(objectUrl);
 
-      const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
-        method: 'POST',
-        body: formData,
-      });
-
-      const data = await response.json();
-
-      if (data.secure_url) {
-        onUploadSuccess(data.secure_url, data.public_id);
-      } else {
-        throw new Error('Upload gagal');
-      }
-    } catch (err) {
-      setError('Gagal mengupload foto. Coba lagi.');
-      console.error('Upload error:', err);
-    } finally {
-      setUploading(false);
-    }
+    // Pass file to parent
+    onFileSelect(file);
   };
 
-  return (
-    <div className="space-y-3">
-      <div className="flex items-center gap-4">
-        {/* Preview */}
-        <div className="relative">
-          {currentPhotoUrl ? (
-            <img
-              src={currentPhotoUrl}
-              alt="Profile"
-              className="w-24 h-24 rounded-full object-cover border-4 border-indigo-100"
-            />
-          ) : (
-            <div className="w-24 h-24 rounded-full bg-gray-200 flex items-center justify-center">
-              <Upload className="w-8 h-8 text-gray-400" />
-            </div>
-          )}
-        </div>
+  const displayUrl = previewUrl || currentPhotoUrl;
 
-        {/* Upload Button */}
-        <div>
+  return (
+    <div className="flex flex-col items-center space-y-3">
+      {/* Preview */}
+      <div className="relative">
+        {displayUrl ? (
+          <img
+            src={displayUrl}
+            alt="Profile"
+            className="w-32 h-32 rounded-full object-cover border-4 border-indigo-100"
+          />
+        ) : (
+          <div className="w-32 h-32 rounded-full bg-indigo-600 text-white flex items-center justify-center text-3xl font-bold">
+            JA
+          </div>
+        )}
+      </div>
+
+      {/* Upload Button - Only show when not disabled */}
+      {!disabled && (
+        <>
           <label
             htmlFor="photo-upload"
-            className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg border cursor-pointer transition-colors ${
-              uploading
-                ? 'bg-gray-100 border-gray-300 cursor-not-allowed'
-                : 'bg-indigo-600 border-indigo-600 text-white hover:bg-indigo-700'
-            }`}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border cursor-pointer transition-colors bg-indigo-600 border-indigo-600 text-white hover:bg-indigo-700"
           >
-            {uploading ? (
-              <>
-                <Loader className="w-4 h-4 animate-spin" />
-                <span>Uploading...</span>
-              </>
-            ) : (
-              <>
-                <Upload className="w-4 h-4" />
-                <span>Ubah Foto</span>
-              </>
-            )}
+            <Upload className="w-4 h-4" />
+            <span>Ubah Foto</span>
           </label>
           <input
             id="photo-upload"
             type="file"
             accept="image/jpeg,image/png,image/jpg,image/webp"
             onChange={handleFileChange}
-            disabled={uploading}
             className="hidden"
           />
-        </div>
-      </div>
 
-      {/* Error Message */}
-      {error && (
-        <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
-          <X className="w-4 h-4" />
-          <span>{error}</span>
-        </div>
+          {/* Error Message */}
+          {error && (
+            <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+              <X className="w-4 h-4" />
+              <span>{error}</span>
+            </div>
+          )}
+
+          {/* Info */}
+          <p className="text-xs text-gray-500 text-center">Format: JPG, PNG, WEBP. Maksimal 5MB.</p>
+        </>
       )}
-
-      {/* Info */}
-      <p className="text-xs text-gray-500">Format: JPG, PNG, WEBP. Maksimal 5MB.</p>
     </div>
   );
 }

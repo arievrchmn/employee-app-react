@@ -4,11 +4,13 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { ApiError, staffApi } from '../lib/api';
 import toast from 'react-hot-toast';
+import { ImageUploader } from '../components/ImageUploader';
 
 export function ProfilePage() {
   const [isEditing, setIsEditing] = useState(false);
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const queryClient = useQueryClient();
 
   const { data: profile, isLoading } = useQuery({
@@ -17,11 +19,13 @@ export function ProfilePage() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: (data: { phone?: string; password?: string }) => staffApi.updateProfile(data),
+    mutationFn: async (data: { phone?: string; password?: string; photo_url?: string }) =>
+      staffApi.updateProfile(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['profile'] });
       setIsEditing(false);
       setPassword('');
+      setSelectedFile(null);
       toast('Profil berhasil diperbarui!');
     },
     onError: (error: ApiError) => {
@@ -29,16 +33,62 @@ export function ProfilePage() {
     },
   });
 
-  const handleSave = () => {
-    const updates: { phone?: string; password?: string } = {};
-    if (phone && phone !== profile?.data.phone) updates.phone = phone;
-    if (password) updates.password = password;
+  const handleSave = async () => {
+    const updates: { phone?: string; password?: string; photo_url?: string } = {};
 
+    // Check phone
+    if (phone && phone !== profile?.data.phone) {
+      updates.phone = phone;
+    }
+
+    // Check password
+    if (password) {
+      updates.password = password;
+    }
+
+    // Check and upload photo if selected
+    if (selectedFile) {
+      try {
+        const CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
+        const UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
+
+        const formData = new FormData();
+        formData.append('file', selectedFile);
+        formData.append('upload_preset', UPLOAD_PRESET);
+        formData.append('folder', 'employee-photos');
+
+        const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
+          method: 'POST',
+          body: formData,
+        });
+
+        const data = await response.json();
+
+        if (data.secure_url) {
+          updates.photo_url = data.secure_url;
+        } else {
+          throw new Error('Upload gagal');
+        }
+      } catch (err) {
+        toast('Gagal mengupload foto.');
+        console.error('Upload error:', err);
+        return;
+      }
+    }
+
+    // If no updates, return
     if (Object.keys(updates).length === 0) {
       return;
     }
 
+    // Save all updates
     updateMutation.mutate(updates);
+  };
+
+  const handleCancel = () => {
+    setIsEditing(false);
+    setPassword('');
+    setSelectedFile(null);
   };
 
   if (isLoading) {
@@ -88,13 +138,10 @@ export function ProfilePage() {
                   d="M5 13l4 4L19 7"
                 />
               </svg>
-              Simpan
+              {updateMutation.isPending ? 'Menyimpan...' : 'Simpan'}
             </button>
             <button
-              onClick={() => {
-                setIsEditing(false);
-                setPassword('');
-              }}
+              onClick={handleCancel}
               disabled={updateMutation.isPending}
               className="flex items-center gap-2 bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition"
             >
@@ -113,16 +160,17 @@ export function ProfilePage() {
       </div>
 
       <div className="flex flex-col md:flex-row gap-8">
+        {/* Image Uploader Section */}
         <div className="flex flex-col items-center">
-          <img
-            src={
+          <ImageUploader
+            currentPhotoUrl={
               profileData?.photo_url ||
               `https://ui-avatars.com/api/?name=${encodeURIComponent(
                 profileData?.name || 'User'
               )}&size=200&background=4F46E5&color=fff`
             }
-            alt="Foto Profil"
-            className="w-40 h-40 rounded-full object-cover border-4 border-indigo-100"
+            onFileSelect={setSelectedFile}
+            disabled={!isEditing}
           />
         </div>
 
