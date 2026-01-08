@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { ApiError, staffApi } from '../lib/api';
 import toast from 'react-hot-toast';
 import { ImageUploader } from '../components/ImageUploader';
+import { LoadingSpinner } from '../components/ui/LoadingSpinner';
 
 export function ProfilePage() {
   const [isEditing, setIsEditing] = useState(false);
@@ -92,11 +93,7 @@ export function ProfilePage() {
   };
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
-      </div>
-    );
+    return <LoadingSpinner />
   }
 
   const profileData = profile?.data;

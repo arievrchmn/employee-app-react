@@ -6,6 +6,7 @@ import timezone from 'dayjs/plugin/timezone';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ApiError, attendanceApi } from '../lib/api';
 import toast from 'react-hot-toast';
+import { LoadingSpinner } from '../components/ui/LoadingSpinner';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -52,11 +53,7 @@ export function AttendancePage() {
   };
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
-      </div>
-    );
+    return <LoadingSpinner />
   }
 
   const canCheckIn = todayData?.data.can_check_in;

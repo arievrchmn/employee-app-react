@@ -4,6 +4,7 @@ import { useState } from 'react';
 import dayjs from 'dayjs';
 import { useQuery } from '@tanstack/react-query';
 import { attendanceApi } from '../lib/api';
+import { LoadingSpinner } from '../components/ui/LoadingSpinner';
 
 export function SummaryPage() {
   const [page, setPage] = useState(1);
@@ -27,11 +28,7 @@ export function SummaryPage() {
   };
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
-      </div>
-    );
+    return <LoadingSpinner />
   }
 
   const attendances = summaryData?.data || [];
