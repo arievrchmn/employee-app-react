@@ -15,7 +15,7 @@ A modern employee attendance application for Work From Home (WFH) management bui
 
 ## Prerequisites
 
-- Node.js (v18 or higher recommended)
+- Node.js (v20 or higher recommended)
 - npm or yarn or pnpm
 
 ## Installation
