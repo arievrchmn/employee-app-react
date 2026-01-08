@@ -6,6 +6,7 @@ import { useMutation } from '@tanstack/react-query';
 import { useAuth } from '../contexts/AuthContext';
 import { ApiError, authApi } from '../lib/api';
 import toast from 'react-hot-toast';
+import { Button } from '../components/ui/Button';
 
 export function LoginPage() {
   const [email, setEmail] = useState('');
@@ -96,13 +97,15 @@ export function LoginPage() {
             />
           </div>
 
-          <button
+          <Button
+            variant="primary"
             onClick={handleSubmit}
-            disabled={loginMutation.isPending}
-            className="w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            fullWidth
+            size="lg"
+            isLoading={loginMutation.isPending}
           >
-            {loginMutation.isPending ? 'Loading...' : 'Masuk'}
-          </button>
+            Masuk
+          </Button>
         </div>
       </div>
     </div>

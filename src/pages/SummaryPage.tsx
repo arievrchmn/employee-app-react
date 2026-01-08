@@ -5,6 +5,7 @@ import dayjs from 'dayjs';
 import { useQuery } from '@tanstack/react-query';
 import { attendanceApi } from '../lib/api';
 import { LoadingSpinner } from '../components/ui/LoadingSpinner';
+import { Button } from '../components/ui/Button';
 
 export function SummaryPage() {
   const [page, setPage] = useState(1);
@@ -28,7 +29,7 @@ export function SummaryPage() {
   };
 
   if (isLoading) {
-    return <LoadingSpinner />
+    return <LoadingSpinner />;
   }
 
   const attendances = summaryData?.data || [];
@@ -59,20 +60,23 @@ export function SummaryPage() {
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
             />
           </div>
-          <button
+          <Button
+            variant="primary"
             onClick={handleFilter}
-            className="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition flex items-center gap-2"
+            className="px-6"
+            leftIcon={
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 2v-8.5L3.293 5.293A1 1 0 013 4.586V4z"
+                />
+              </svg>
+            }
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 2v-8.5L3.293 5.293A1 1 0 013 4.586V4z"
-              />
-            </svg>
             Filter
-          </button>
+          </Button>
         </div>
       </div>
 

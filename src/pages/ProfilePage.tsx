@@ -6,6 +6,8 @@ import { ApiError, staffApi } from '../lib/api';
 import toast from 'react-hot-toast';
 import { ImageUploader } from '../components/ImageUploader';
 import { LoadingSpinner } from '../components/ui/LoadingSpinner';
+import { useImageUpload } from '../hooks/useImageUpload';
+import { Button } from '../components/ui/Button';
 
 export function ProfilePage() {
   const [isEditing, setIsEditing] = useState(false);
@@ -13,6 +15,7 @@ export function ProfilePage() {
   const [password, setPassword] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const queryClient = useQueryClient();
+  const { uploadImage, isUploading } = useImageUpload();
 
   const { data: profile, isLoading } = useQuery({
     queryKey: ['profile'],
@@ -47,32 +50,12 @@ export function ProfilePage() {
       updates.password = password;
     }
 
-    // Check and upload photo if selected
+    // Upload photo if selected
     if (selectedFile) {
       try {
-        const CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
-        const UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
-
-        const formData = new FormData();
-        formData.append('file', selectedFile);
-        formData.append('upload_preset', UPLOAD_PRESET);
-        formData.append('folder', 'employee-photos');
-
-        const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
-          method: 'POST',
-          body: formData,
-        });
-
-        const data = await response.json();
-
-        if (data.secure_url) {
-          updates.photo_url = data.secure_url;
-        } else {
-          throw new Error('Upload gagal');
-        }
-      } catch (err) {
-        toast('Gagal mengupload foto.');
-        console.error('Upload error:', err);
+        const photoUrl = await uploadImage(selectedFile);
+        updates.photo_url = photoUrl;
+      } catch {
         return;
       }
     }
@@ -103,55 +86,61 @@ export function ProfilePage() {
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold text-gray-800">Profil Karyawan</h2>
         {!isEditing ? (
-          <button
+          <Button
+            variant="primary"
             onClick={() => {
               setIsEditing(true);
               setPhone(profileData?.phone || '');
             }}
-            className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition"
+            leftIcon={
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                />
+              </svg>
+            }
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-              />
-            </svg>
             Edit
-          </button>
+          </Button>
         ) : (
           <div className="flex gap-2">
-            <button
+            <Button
+              variant='success'
               onClick={handleSave}
-              disabled={updateMutation.isPending}
-              className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition disabled:opacity-50"
+              disabled={updateMutation.isPending || isUploading}
+              leftIcon={
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+              }
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M5 13l4 4L19 7"
-                />
-              </svg>
-              {updateMutation.isPending ? 'Menyimpan...' : 'Simpan'}
-            </button>
-            <button
+              {updateMutation.isPending || isUploading ? 'Loading...' : 'Simpan'}
+            </Button>
+            <Button
+              variant="secondary"
               onClick={handleCancel}
-              disabled={updateMutation.isPending}
-              className="flex items-center gap-2 bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition"
+              disabled={updateMutation.isPending || isUploading}
+              leftIcon={
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              }
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
               Batal
-            </button>
+            </Button>
           </div>
         )}
       </div>

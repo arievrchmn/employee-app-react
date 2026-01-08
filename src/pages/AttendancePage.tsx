@@ -7,6 +7,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ApiError, attendanceApi } from '../lib/api';
 import toast from 'react-hot-toast';
 import { LoadingSpinner } from '../components/ui/LoadingSpinner';
+import { Button } from '../components/ui/Button';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -107,40 +108,28 @@ export function AttendancePage() {
           </div>
         )}
 
-        <button
+        <Button
+          variant={canCheckIn ? 'success' : canCheckOut ? 'warning' : 'secondary'}
+          size='lg'
+          fullWidth
           onClick={handleAttendance}
-          disabled={
-            (!canCheckIn && !canCheckOut) || checkInMutation.isPending || checkOutMutation.isPending
+          disabled={!canCheckIn && !canCheckOut || checkInMutation.isPending || checkOutMutation.isPending}
+          isLoading={checkInMutation.isPending || checkOutMutation.isPending}
+          loadingText="Memproses..."
+          className="py-6 shadow-lg hover:shadow-xl transform hover:scale-105 disabled:transform-none"
+          leftIcon={
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
           }
-          className={`w-full py-6 rounded-xl font-semibold text-lg transition duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none ${
-            canCheckIn
-              ? 'bg-green-600 text-white hover:bg-green-700'
-              : canCheckOut
-              ? 'bg-orange-600 text-white hover:bg-orange-700'
-              : 'bg-gray-400 text-white'
-          }`}
         >
-          <svg
-            className="inline mr-2 w-6 h-6"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-            />
-          </svg>
-          {checkInMutation.isPending || checkOutMutation.isPending
-            ? 'Memproses...'
-            : canCheckIn
-            ? 'Check-in'
-            : canCheckOut
-            ? 'Check-out'
-            : 'Sudah Absen Hari Ini'}
-        </button>
+          {canCheckIn ? 'Check-in' : canCheckOut ? 'Check-out' : 'Sudah Absen Hari Ini'}
+        </Button>
 
         <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
           <p className="text-sm text-yellow-800">
